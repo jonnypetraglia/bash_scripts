@@ -1,3 +1,5 @@
+if [[ "$(uname)" == "Darwin" ]]; then
+
 ## https://github.com/Ruxton/shell_config/blob/master/.profile.d/osx_aliases.bash
 
 # rm_DS_Store: removes all .DS_Store file from the current dir and below
@@ -26,3 +28,5 @@ alias cvlc="/Applications/VLC.app/Contents/MacOS/VLC -I rc"
 alias get_profile_img="dscl . -read $HOME JPEGPhoto | tail -1 | xxd -r -p > $HOME/profile_pic.jpg"
 
 alias py2applet="/System/Library/Frameworks/Python.framework/Versions/Current/Extras/bin/py2applet"
+
+fi
