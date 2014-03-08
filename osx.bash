@@ -23,5 +23,6 @@ cdf ()
 
 alias cvlc="/Applications/VLC.app/Contents/MacOS/VLC -I rc"
 
+alias get_profile_img="dscl . -read $HOME JPEGPhoto | tail -1 | xxd -r -p > $HOME/profile_pic.jpg"
 
 alias py2applet="/System/Library/Frameworks/Python.framework/Versions/Current/Extras/bin/py2applet"

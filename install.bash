@@ -8,4 +8,5 @@ install_homebrew() {
 
 install_rvm() {
     curl -sSL https://get.rvm.io | bash
+    rvm osx-ssl-certs update all
 }
