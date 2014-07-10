@@ -2,6 +2,21 @@
 export CLICOLOR=1
 export LSCOLORS=GxFxCxDxBxegedabagaced
 #export PS1="\[\e[0;33m[\h \A \w]\e[m\]\[\e[1;31m\$\e[m\] "
+
+function gitdiffcount() {
+  if [[ -n "$(git rev-parse --is-inside-work-tree 2>/dev/null)" ]]; then
+    num=`git diff --shortstat 2>/dev/null | (awk '{print $4+$6}')` 
+    if [[ -n "$num" ]]; then
+      echo [±$num]
+    else
+      echo [clean]
+    fi
+  else
+    echo ""
+  fi
+}
+
+export PS1='\n∴\h\$ in \w $(gitdiffcount)         \@\n  ↳'
 export EDITOR=vim
 
 # DAT PATH
@@ -26,7 +41,7 @@ alias mkgz="tar -cvzf"
 alias untar="tar -xvf"
 alias unbz2="tar -xvjf"
 alias ungz="tar -xvzf"
-alias ll="ls -al --color=auto"
+alias ll="ls -a l --color=auto"
 alias brokensim="find -L . -type l -exec ls -lF --color=yes '{}' +"
 alias sshvnc="ssh -L 5901:localhost:5901"
 
