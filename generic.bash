@@ -1,40 +1,66 @@
 ## https://github.com/Ruxton/shell_config/blob/master/.profile.d/generic_aliases.bash
 
-# truecrypt: TrueCrypt command line
-alias truecrypt='/Applications/TrueCrypt.app/Contents/MacOS/Truecrypt --text'
-
-# screen: realias screen to use bash
+### Re-defining some commands (remember \command runs the original)
+alias mkdir="mkdir -pv"
 alias screen="screen -s -/bin/bash"
 
-# h: Show bash history
-alias h="history | more"
 
+### Other shorthands
+alias cd..="cd ../.."
+alias cd...="cd ../../.."
+alias ccd="clear && cd"
+alias cl="clear"
+alias cls="clear && ls"
+alias ll="ls -a l"
+alias l1="ls -1"
+alias lm="ls -al | more"
+alias lc="ls -C"
+# Show the number of online users
+alias nu="who|wc -l"
+# Show active processes
+alias p="ps -ef"
+# Show number of active processes
+alias np="ps -ef|wc -l"
 # dirs: Show only directories in the current directory
 alias dirs="ls -al | grep '^d'"
-
 # dirscount: Number of directories in current directory
 alias dirscount="ls -al|grep ^d|wc -l"
+# Show bash history
+alias h="history | more"
+# mk{archive} & un{archive}
+alias mktar="tar -cvf"
+alias mkbz2="tar -cvjf"
+alias mkgz="tar -cvzf"
+alias untar="tar -xvf"
+alias unbz2="tar -xvjf"
+alias ungz="tar -xvzf"
+# SSH into a VNC instance running on the machine
+alias sshvnc="ssh -L 5901:localhost:5901"
+# Restore terminal settings when screwed up
+alias fix_stty="stty sane"
+# Generates a date in the same format that Rails uses. I used it once.
+alias railsdate='date -u +"%Y%m%d%H%M%S"'
+# Re-Source
+alias resource="source ~/.bash_profile"
 
-# lm: List (ls -al) contents of current directory and page with more
-alias lm="ls -al | more"
 
-# lc: List contents of current directory, force multi-column output
-alias lc="ls -C"
+## Functions & function-ish aliases
+# Finds broken symlinks in the current directory
+alias brokensym="find -L . -type l -exec ls -lF --color=yes '{}' +"
 
-# nu: Show the number of online users
-alias nu="who|wc -l"
+## Make dir & change to it
+mcd() { mkdir -p "$1" && cd "$1"; }
 
-# np: Show the number of active processes
-alias np="ps -ef|wc -l"
+## ClearCDLS
+ccdls() {
+    clear && cd "$1" && ls
+}
+## CDLS
 
-# p: Show all the active processes
-alias p="ps -ef"
+cdls() {
+    cd "$1" && ls
+}
 
-# cd..: Two directory levels above the current dir
-alias cd..="cd ../.."
-
-# cd...: Three directory levels above the current dir
-alias cd...="cd ../../.."
 
 # cpbak: quickly copy/backup a directory
 cpbak() {
@@ -43,13 +69,43 @@ cpbak() {
   dirname=`abspath $1`
   basename=`basename $dirname`
 
-  cp -R $dirname ${dirname}BACK
+  cp -R $dirname ${dirname}.bak
 }
 
 # bak: Backup a file "bak filename.txt"
 bak() {
-  cp $1 ${1}--`date +%Y%m%d%H%M`.backup
+  cp $1 ${1}--`date +%Y%m%d%H%M`.bak
 }
+
+
+
+## Kill a process
+function exterminate() { kill -KILL $(pgrep "$1"); }
+
+## Compare the MD5s of two files
+function md5compare()
+{
+  if [[ $# -lt 1 ]]
+  then
+    echo "Dude you have to pass AT LEAST ONE file"
+    return 1
+  fi
+  num=0
+  for var in "$@"
+  do
+    num=$(($num + 1))
+    if [[ $(md5sum "$var" | awk '{print $1}') != $(md5sum "$1" | awk '{print $1}') ]]
+    then
+      echo NOPE! The following file differs:
+      md5sum "$1"
+      md5sum "$var"
+      return 1
+    fi
+  done
+  echo These $num files are the same
+  return 0
+}
+alias md5cmp=md5compare
 
 # abspath: absolute path of a directory
 function abspath() {
@@ -70,6 +126,7 @@ function user_confirm() {
   fi
 }
 
+# Reads a value from the user providing a default if the user enters nothing
 # read_with_defaults: $1=prompt $2=default $3=variable to set
 function read_with_defaults() {
   local return_var
@@ -81,102 +138,7 @@ function read_with_defaults() {
   eval $3=\$return_var
 }
 
-brewcompletion_path="/usr/local/etc/bash_completion.d/"
-
-function brewcompletion() {
-  ln -s "$HOME/.bash_completion.d/$1" "/usr/local/etc/bash_completion.d/$1"
-}
-complete -F _bash_complete_alllister brewcompletion
-
-#
-#Usage
-#
-#$ __selector "Select a volume" "selected_volume" "" "`ls -la /Volumes/`"
-#$ cd $selected_volume
-#
-# __selector: good for selecting stuff
-function __selector() {
-  local selections selPrompt selCurrent selListCommand selSize choose
-
-  selPrompt=$1
-  selReturn=$2
-  selCurrent=$3
-  selList=$4
-
-  prompt=$selPrompt
-
-  let count=0
-
-  for sel in $selList; do
-    let count++
-    selections[$count-1]=$sel
-  done
-  if [[ $count > 0 ]]; then
-    choose=0
-    selSize=${#selections[@]}
-
-    while [ $choose -eq 0 ]; do
-      let count=0
-
-      for sel in $selList; do
-        let count++
-        echo "$count) $sel"
-      done
-
-      echo
-
-      read -ep "${prompt}, followed by [ENTER]:" choose
-
-      if [[ $choose != ${choose//[^0-9]/} ]] || [ ! $choose -le $selSize ]
-      then
-        echo
-        echo "Please choose one of the listed numbers."
-        echo
-        let choose=0
-      fi
-
-    done
-
-    let choose--
-
-    export ${selReturn}=${selections[$choose]}
-  else
-    return 0
-  fi
-}
-
-osx_real_path () {
-  OIFS=$IFS
-  IFS='/'
-  for I in $1
-  do
-    # Resolve relative path punctuation.
-    if [ "$I" = "." ] || [ -z "$I" ]
-      then continue
-    elif [ "$I" = ".." ]
-      then FOO="${FOO%%/${FOO##*/}}"
-           continue
-      else FOO="${FOO}/${I}"
-    fi
-
-    # Dereference symbolic links.
-    if [ -h "$FOO" ] && [ -x "/bin/ls" ]
-      then IFS=$OIFS
-           set `/bin/ls -l "$FOO"`
-           while shift ;
-           do
-             if [ "$1" = "->" ]
-               then FOO=$2
-                    shift $#
-                    break
-             fi
-           done
-    fi
-  done
-  IFS=$OIFS
-  echo "$FOO"
-}
-
+# I don't even use screen
 # __screend: screen daemonizing
 __screend() {
   local name="${1}"
